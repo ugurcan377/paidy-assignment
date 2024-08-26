@@ -1,0 +1,38 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:16.4
+    restart: always
+    environment:
+      POSTGRES_USER: paidy
+      POSTGRES_PASSWORD: paidy
+      POSTGRES_DB: paidy
+      TZ: "Asia/Tokyo"
+    ports:
+      - 5435:5432
+    volumes:
+      - paidy-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  paidy-assignment:
+    build:
+      context: .
+    environment:
+      DATABASE_URL: "postgres://paidy:paidy@postgres:5432/"
+    ports:
+      - 4000:4000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - prod
+
+networks:
+  paidy-assignment:
+    name: paidy-assignment
+volumes:
+  paidy-postgres:
